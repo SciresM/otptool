@@ -1,0 +1,88 @@
+.Dd October 12, 2018
+.Dt OTPTOOL 1
+.Os
+.Sh NAME
+.Nm otptool
+.Nd view and extract data from a 3DS OTP
+.Sh SYNOPSIS
+.Nm
+.Op Fl c Ar ctcert_out
+.Op Fl d Ar decrypted_otp_out
+.Op Fl Dh
+.Ar otp
+.Sh DESCRIPTION
+The
+.Nm
+utility views and extracts data from a 3DS OTP dump.
+The dump can be either encrypted or already decrypted.
+If no arguments are given, no files will be written.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar ctcert_out
+Generate the CTCert from the OTP and write the CTCert to
+.Ar ctcert_out .
+.It Fl d Ar decrypted_otp_out
+Write the decrypted OTP to
+.Ar decrypted_otp_out .
+Some utilities require a decrypted OTP,
+such as yellows8's boot9_aeskeytool_conunique.sh from boot9_tools.
+.It Fl D
+Use the development key and IV rather than the retail ones for
+decryption.
+This option is used to handle OTPs from development units.
+.El
+.Pp
+The displayed fields mean:
+.Bl -tag -width Ds
+.It Device ID
+Every 3DS unit has a unique device identifier (ID).
+This is used, amongst other things, for the eShop infrastructure.
+.It Fallback keyY
+This data is used as fallback keyY data if
+.Pa nand:/private/movable.sed
+does not exist or is invalid.
+Internally, this is actually a series of two additional 64-bit
+console-unique IDs,
+but they are never used as such in practice.
+.It Version
+This specifies the OTP version.
+It seems that earlier versions of Nintendo's operating systems also had
+OTPs of some sort, hence the version field.
+.It Is dev unit
+If
+.Dq true ,
+this is a dev unit.
+If
+.Dq false ,
+this is not a dev unit.
+Note that this is separate from the decryption process \(en it's
+theoretically possible that an OTP uses dev encryption but then
+specifies a retail console, but has never been specified in the wild.
+.It Manufactured
+Date and time when this unit was manufactured/the OTP was written.
+The actual NAND flashing process and unit assembly may take place at a
+later time.
+.It CTCert expiry
+The CTCert can expire.
+The expiry time seems to be exactly 20 years after the manufacturing
+date as described above.
+.It EC PrivKey
+Private key for the sect233r1 elliptic curve.
+Seems to be specified as R followed by S in big-endian.
+.It Signature
+An ECDSA signature over the CTCert using curve sect233r1.
+.El
+.Sh BUILDING
+To build
+.Nm otptool ,
+just type
+.Ic make .
+You require a POSIX-compatible environment for getopt(3).
+Additionally, you require libgcrypt at version 1.4.0 or above;
+.Nm
+may work on lower versions, but this hasn't been tested.
+.Sh BUGS
+The CTCert signature is not verified.
+As the OTP already has a hash that can be used to verify,
+it does not seem to be worthwhile.
