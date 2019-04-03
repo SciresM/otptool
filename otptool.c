@@ -202,14 +202,14 @@ static void convert_otp_to_device_cert(unsigned char cert[0x180], const otp_t *o
     store32_be(cert + 0x104, (uint32_t)otp->expiry);
     ec_priv_to_pub(otp->ec_privk + 2, cert + 0x108);
 
-#if 0
+#if 1
     /* TODO: verify cert; public key obtained from Process9 NintendoCTR2prod cert, but seems wrong? */
     unsigned char certhash[0x20];
     gcry_md_hash_buffer(GCRY_MD_SHA256, certhash, cert + 0x80, 0x100);
     uint8_t Q[] = {
         0x00, 0x4e, 0x3b, 0xb7, 0x4d, 0x5d, 0x95, 0x9e, 0x68, 0xce, 0x90, 0x04, 0x34, 0xfe, 0x9e, 0x4a, 0x3f, 0x09, 0x4a, 0x33, 0x77, 0x1f, 0xa7, 0xc0, 0xe4, 0xb0, 0x23, 0x26, 0x4d, 0x98, 0x01, 0x4c, 0xa1, 0xfc, 0x79, 0x9d, 0x3f, 0xa5, 0x21, 0x71, 0xd5, 0xf9, 0xbd, 0x5b, 0x17, 0x77, 0xec, 0x0f, 0xef, 0x7a, 0x38, 0xd1, 0x66, 0x9b, 0xbf, 0x83, 0x03, 0x25, 0x84, 0x3a
     };
-    printf("%d\n", check_ecdsa(Q, otp->cert_sig + 30, otp->cert_sig, certhash));
+    printf("CTCert signature: %s\n", check_ecdsa(Q, otp->cert_sig, otp->cert_sig + 30, certhash) ? "VALID" : "FAIL!!");
 #endif
 }
 
@@ -225,7 +225,7 @@ static int save_file(const char *path, const char *desc, const unsigned char *da
         fprintf(stderr, "error writing %s\n", desc);
         goto clean;
     }
-    printf("wrote decrypted OTP to %s\n", path);
+    printf("wrote %s to %s\n", desc, path);
 
     ret = 0;
 clean:
