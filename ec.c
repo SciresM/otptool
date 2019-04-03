@@ -125,14 +125,18 @@ void bn_inv(u8 *d, u8 *a, u8 *N, u32 n)
 	bn_exp(d, a, N, n, t, n);
 }
 
-// Copyright 2007,2008  Segher Boessenkool  <segher@kernel.crashing.org>
-// Licensed under the terms of the GNU GPL, version 2
-// http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
-// obtained from http://git.infradead.org/?p=users/segher/wii.git
-
-#include <string.h>
-#include <stdio.h>
-#include <openssl/sha.h>
+void bn_shiftr(u8 *in, u32 size, u32 shiftn){ //this is to help convert sha1 ecdsa to sha256. this curve is limited to 233 bits so the 256 bit hash needs to be shifted right 23 bits. 
+	u8 carry=0;
+	u8 temp=0;
+	for(int j=0;j<shiftn;j++){
+		for(int i=0;i<size;i++){
+			temp=*(in+i) & 1;
+			*(in+i)=(*(in+i) >> 1 ) | carry<<7;
+			carry=temp;
+		}
+		carry=0; temp=0;
+	}
+}
 
 #if 0
 // y**2 + x*y = x**3 + x + b
@@ -461,8 +465,9 @@ int generate_ecdsa(u8 *R, u8 *S, u8 *k, u8 *hash)
 	FILE *fp;
 
 	elt_zero(e);
-	memcpy(e + 10, hash, 20);
-
+	bn_shiftr(hash, 32, 7);
+	memcpy(e, hash, 30);
+                        
 	fp = fopen("/dev/random", "rb");
 	if (fread(m, sizeof m, 1, fp) != 1)
 	{
@@ -502,8 +507,9 @@ int check_ecdsa(u8 *Q, u8 *R, u8 *S, u8 *hash)
 	bn_inv(Sinv, S, ec_N, 30);
 
 	elt_zero(e);
-	memcpy(e + 10, hash, 20);
-
+	bn_shiftr(hash, 32, 7);  //shift right 7 bits.
+	memcpy(e, hash, 30);     //then shift 16 more bits right by cutting off the last two bytes of 32 byte sha256.
+                             //this gets our bignum sha256 hash to fit in the 233 bit limit of this ecdsa curve.
 	bn_mul(w1, e, Sinv, ec_N, 30);
 	bn_mul(w2, R, Sinv, ec_N, 30);
 
