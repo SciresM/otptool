@@ -103,6 +103,7 @@ You require a POSIX-compatible environment for getopt(3).
 Additionally, you require libgcrypt at version 1.4.0 or above;
 **otptool**
 may work on lower versions, but this hasn't been tested.
+For Windows, openssl is also needed.
 
 # BUGS
 

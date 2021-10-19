@@ -3,7 +3,12 @@
 #define GCRYPT_NO_DEPRECATED
 #include <gcrypt.h>
 
-#include <err.h>
+#ifdef _WIN32
+	#include <openssl/err.h>
+#else
+	#include <err.h>
+#endif
+
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -12,6 +17,8 @@
 #include <unistd.h>
 
 #include "ec.h"
+
+static const char *prog_name = "otptool";
 
 /* Struct for OTP data. */
 typedef struct {
@@ -252,6 +259,8 @@ int main(int argc, char *argv[]) {
     otp_t otp;
     int ch, ret = EXIT_SUCCESS;
     bool is_dev = false;
+	
+	prog_name = (argc < 1) ? "otptool" : argv[0];
 
     if (gcry_check_version("1.4.0") == NULL) {
         fprintf(stderr, "libgcrypt >= 1.4.0 required\n");
@@ -278,16 +287,17 @@ int main(int argc, char *argv[]) {
             is_dev = true;
             break;
         case 'h':
-            usage(argv[0], EXIT_SUCCESS);
+            usage(prog_name, EXIT_SUCCESS);
         default:
-            usage(argv[0], EXIT_FAILURE);
+            usage(prog_name, EXIT_FAILURE);
         }
     }
     argc -= optind;
     argv += optind;
     
+	
     if (argc < 1) {
-        usage(argv[0], EXIT_FAILURE);
+        usage(prog_name, EXIT_FAILURE);
     }
 
     if (read_and_decrypt_otp(argv[0], rawotp, is_dev) != 0) {
